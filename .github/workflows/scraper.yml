@@ -1,0 +1,61 @@
+name: Auto Scraper
+
+on:
+  schedule:
+    - cron: '0 */6 * * *'  # Jalan tiap 6 jam
+  workflow_dispatch:  # Bisa jalan manual
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pages: write
+      id-token: write
+    
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+      
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+      
+      - name: Install dependencies
+        run: |
+          pip install requests beautifulsoup4 pandas lxml selenium webdriver-manager
+      
+      - name: Run scraper
+        run: |
+          python scraper.py
+      
+      - name: Commit & Push results
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          
+          # Add dan commit kalo ada perubahan
+          git add data/
+          git diff --quiet && git diff --staged --quiet || git commit -m "Auto scrape: $(date '+%Y-%m-%d %H:%M:%S')"
+          git push
+      
+      - name: Upload artifact for GitHub Pages
+        uses: actions/upload-pages-artifact@v2
+        with:
+          path: 'web/'
+
+  deploy:
+    needs: scrape
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v2
