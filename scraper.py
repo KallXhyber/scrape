@@ -1,10 +1,14 @@
-import undetected_chromedriver as uc
-import pandas as pd
-import requests
-import time
 import os
+import time
+import requests
+import pandas as pd
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.chrome.service import Service
+from webdriver_manager.chrome import ChromeDriverManager
+from selenium.webdriver.common.by import By
+from selenium_stealth import stealth
 
-# API ENDPOINT FIREBASE TUAN
 FIREBASE_URL = "https://kall-e4441-default-rtdb.asia-southeast1.firebasedatabase.app/scraper/request.json"
 
 def get_command():
@@ -15,37 +19,55 @@ def get_command():
 
 def harvest():
     cmd = get_command()
-    if not cmd or not cmd.get('target'): 
-        print("NO VALID TASK IN FIREBASE")
+    if not cmd or not cmd.get('target'):
+        print("COMMAND KOSONG DI FIREBASE")
         return
 
-    print(f"ATTACKING TARGET: {cmd['target']}")
+    print(f"ATTACKING: {cmd['target']}")
 
-    options = uc.ChromeOptions()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    
-    # Bypass deteksi bot level tinggi
-    driver = uc.Chrome(options=options)
-    
+    options = Options()
+    options.add_argument("--headless")
+    options.add_argument("--no-sandbox")
+    options.add_argument("--disable-dev-shm-usage")
+    options.add_experimental_option("excludeSwitches", ["enable-automation"])
+    options.add_experimental_option('useAutomationExtension', False)
+
+    # Otomatis download driver yang cocok dengan versi Chrome di Github
+    service = Service(ChromeDriverManager().install())
+    driver = webdriver.Chrome(service=service, options=options)
+
+    # TEKNOLOGI STEALTH: Menyamar jadi manusia asli
+    stealth(driver,
+        languages=["en-US", "en"],
+        vendor="Google Inc.",
+        platform="Win32",
+        webgl_vendor="Intel Inc.",
+        renderer="Intel Iris OpenGL Engine",
+        fix_hairline=True,
+    )
+
     try:
         driver.get(cmd['target'])
-        time.sleep(15) # Menunggu Cloudflare Turnstile/Challenge selesai
+        time.sleep(15) # Menunggu Cloudflare Turnstile selesai
 
-        elements = driver.find_elements(uc.By.CSS_SELECTOR, cmd['selector'])
-        data = [{"content": e.text.strip(), "time": time.strftime("%H:%M:%S")} for e in elements if e.text.strip()]
+        elements = driver.find_elements(By.CSS_SELECTOR, cmd['selector'])
+        harvested = []
+        for el in elements:
+            if el.text.strip():
+                harvested.append({"data": el.text.strip(), "time": time.ctime()})
 
-        if data:
-            df = pd.DataFrame(data)
+        if harvested:
+            df = pd.DataFrame(harvested)
             output = "results.csv"
             df.to_csv(output, index=False, mode='a', header=not os.path.exists(output))
-            print(f"SUCCESS: {len(data)} ITEMS HARVESTED")
+            print(f"SUCCESS: {len(harvested)} ITEMS HARVESTED")
         else:
-            print("FAILED: NO DATA FOUND OR BLOCKED BY CLOUDFLARE")
+            print("FAILED: DATA TIDAK DITEMUKAN (SELECTOR SALAH ATAU BLOKIR)")
+            # Screenshot untuk debugging jika gagal
+            driver.save_screenshot("error_debug.png")
 
     except Exception as e:
-        print(f"CRITICAL ERROR: {e}")
+        print(f"ERROR: {e}")
     finally:
         driver.quit()
 
