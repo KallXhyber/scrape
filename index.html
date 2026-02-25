@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>XY-CONTROL PANEL</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { background-color: #0a0a0a; color: #e5e7eb; font-family: 'Inter', sans-serif; }
+        .glass { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-4">
+    <div class="glass p-8 rounded-2xl w-full max-w-md shadow-2xl">
+        <h1 class="text-2xl font-bold mb-6 text-blue-400">👁️ TROJAN COMMANDER</h1>
+        
+        <div class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium mb-1">Target URL</label>
+                <input type="text" id="targetUrl" placeholder="https://target-site.com" class="w-full p-3 rounded bg-zinc-900 border border-zinc-700 focus:outline-none focus:border-blue-500">
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium mb-1">HTML Selector (Element Target)</label>
+                <input type="text" id="selector" placeholder="div.product-name" class="w-full p-3 rounded bg-zinc-900 border border-zinc-700 focus:outline-none focus:border-blue-500">
+            </div>
+
+            <button onclick="sendRequest()" class="w-full py-3 bg-blue-600 hover:bg-blue-700 rounded-lg font-bold transition duration-300">
+                KIRIM PERINTAH
+            </button>
+        </div>
+
+        <div id="status" class="mt-4 text-center text-sm text-zinc-500">Menunggu instruksi...</div>
+    </div>
+
+    <script type="module">
+        // Import Firebase (Tuan masukkan konfigurasi Firebase tuan di sini)
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.x/firebase-app.js";
+        import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/9.x/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAqBIqFt3AKBavzVNr-VS9AlS7drPXXfcg",
+            databaseURL: "https://kall-e4441.firebaseio.com",
+            projectId: "kall-e4441",
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        window.sendRequest = function() {
+            const url = document.getElementById('targetUrl').value;
+            const sel = document.getElementById('selector').value;
+            const status = document.getElementById('status');
+
+            if(!url || !sel) return alert("Isi semua field, Yang Mulia.");
+
+            set(ref(db, 'scraper/request'), {
+                target: url,
+                selector: sel,
+                updatedAt: Date.now()
+            }).then(() => {
+                status.innerText = "Berhasil! Script akan membaca perintah ini.";
+                status.classList.add("text-green-400");
+            });
+        }
+    </script>
+</body>
+</html>
