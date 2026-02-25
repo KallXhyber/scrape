@@ -10,7 +10,8 @@ from selenium.webdriver.common.by import By
 
 # KONFIGURASI FIREBASE TUAN
 # Pastikan tambahkan .json di akhir URL untuk akses REST API
-FIREBASE_URL = "https://project-id.firebaseio.com/scraper/request.json"
+FIREBASE_URL = "# SESUAIKAN DENGAN URL DATABASE TUAN
+FIREBASE_URL = "https://kall-e4441-default-rtdb.asia-southeast1.firebasedatabase.app/scraper/request.json""
 
 def get_remote_command():
     """Mengambil perintah dari dashboard web tuan"""
