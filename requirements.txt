@@ -2,4 +2,3 @@ selenium
 selenium-stealth
 requests
 webdriver-manager
-pandas
