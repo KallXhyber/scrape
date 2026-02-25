@@ -6,55 +6,51 @@
     <title>XY-CONTROL PANEL</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-[#0a0a0a] text-zinc-200 flex items-center justify-center min-h-screen p-4">
-    <div class="bg-zinc-900 border border-zinc-800 p-8 rounded-2xl w-full max-w-md shadow-2xl">
-        <h1 class="text-2xl font-bold mb-6 text-blue-500 flex items-center gap-2">👁️ TROJAN COMMANDER</h1>
-        <div class="space-y-4">
+<body class="bg-[#050505] text-zinc-300 flex items-center justify-center min-h-screen p-4">
+    <div class="bg-zinc-900 border border-blue-900/30 p-8 rounded-3xl w-full max-w-md shadow-[0_0_50px_rgba(0,0,255,0.1)]">
+        <h1 class="text-2xl font-black mb-6 text-blue-500 tracking-tighter">👁️ TROJAN BLIND-EXTRACTOR</h1>
+        <div class="space-y-5">
             <div>
-                <label class="block text-xs uppercase text-zinc-500 mb-1">Target URL</label>
-                <input type="text" id="targetUrl" placeholder="https://..." class="w-full p-3 rounded bg-black border border-zinc-800 focus:border-blue-500 outline-none">
+                <label class="block text-[10px] uppercase font-bold text-zinc-500 mb-1 ml-1">Nama Request (Akan jadi nama file)</label>
+                <input type="text" id="reqName" placeholder="contoh_scrape" class="w-full p-4 rounded-xl bg-black border border-zinc-800 focus:border-blue-600 outline-none transition-all">
             </div>
             <div>
-                <label class="block text-xs uppercase text-zinc-500 mb-1">HTML Selector</label>
-                <input type="text" id="selector" placeholder="div.product" class="w-full p-3 rounded bg-black border border-zinc-800 focus:border-blue-500 outline-none">
+                <label class="block text-[10px] uppercase font-bold text-zinc-500 mb-1 ml-1">URL Target</label>
+                <input type="text" id="targetUrl" placeholder="https://target-ganas.com" class="w-full p-4 rounded-xl bg-black border border-zinc-800 focus:border-blue-600 outline-none transition-all">
             </div>
-            <button id="btnKirim" class="w-full py-3 bg-blue-600 hover:bg-blue-700 rounded-lg font-bold transition active:scale-95">KIRIM PERINTAH</button>
+            <button id="btnExecute" class="w-full py-4 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-black tracking-widest transition-all active:scale-95 shadow-lg shadow-blue-900/20">
+                EXECUTE ATTACK
+            </button>
         </div>
-        <div id="status" class="mt-4 text-center text-sm text-zinc-600 italic">Menunggu instruksi...</div>
+        <div id="status" class="mt-6 text-center text-xs font-mono text-zinc-600 uppercase tracking-tighter">System Idle...</div>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-        const firebaseConfig = {
-            databaseURL: "https://kall-e4441-default-rtdb.asia-southeast1.firebasedatabase.app"
-        };
-
+        const firebaseConfig = { databaseURL: "https://kall-e4441-default-rtdb.asia-southeast1.firebasedatabase.app" };
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
-        // Pasang event listener langsung di script module agar tidak 'undefined'
-        document.getElementById('btnKirim').addEventListener('click', async () => {
+        document.getElementById('btnExecute').addEventListener('click', async () => {
+            const name = document.getElementById('reqName').value.replace(/\s+/g, '_');
             const url = document.getElementById('targetUrl').value;
-            const sel = document.getElementById('selector').value;
-            const statusNode = document.getElementById('status');
+            const status = document.getElementById('status');
 
-            if(!url || !sel) return alert("Lengkapi data, Yang Mulia!");
+            if(!name || !url) return alert("Identitas target belum lengkap, Yang Mulia!");
 
-            statusNode.innerText = "Sourcing data...";
-            
+            status.innerText = "Transmitting to Trojan Core...";
             try {
                 await set(ref(db, 'scraper/request'), {
+                    name: name,
                     target: url,
-                    selector: sel,
                     timestamp: Date.now()
                 });
-                statusNode.innerText = "COMMAND DISPATCHED SUCCESSFULLY";
-                statusNode.style.color = "#3b82f6";
+                status.innerText = "TARGET LOCKED. SCRIPT DEPLOYED.";
+                status.classList.add("text-blue-400");
             } catch (e) {
-                statusNode.innerText = "ERROR: " + e.message;
-                statusNode.style.color = "#ef4444";
+                status.innerText = "FAILED: " + e.message;
             }
         });
     </script>
