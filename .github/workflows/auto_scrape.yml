@@ -30,6 +30,12 @@ jobs:
         run: |
           git config --global user.name "Trojan-Bot"
           git config --global user.email "haekalsaputra01h@gmail.com"
-          git add results.csv || echo "No results"
-          git commit -m "Update Harvest [$(date)]" || echo "No changes"
+          
+          # Paksa git untuk mendeteksi folder hasil/ dan file di dalamnya
+          git add -A
+          
+          # Hanya commit jika ada perubahan agar tidak error
+          git commit -m "New Treasure Harvested: [$(date)]" || echo "No changes to commit"
+          
+          # Push hasil ke repository
           git push
