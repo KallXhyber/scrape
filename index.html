@@ -6,28 +6,27 @@
     <title>XY-CONTROL PANEL</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-[#0a0a0a] text-white flex items-center justify-center min-h-screen p-4">
-    <div class="bg-zinc-900/50 p-8 rounded-2xl w-full max-w-md border border-zinc-800 shadow-2xl">
-        <h1 class="text-2xl font-bold mb-6 text-blue-500">👁️ TROJAN COMMANDER</h1>
+<body class="bg-[#0a0a0a] text-zinc-200 flex items-center justify-center min-h-screen p-4">
+    <div class="bg-zinc-900 border border-zinc-800 p-8 rounded-2xl w-full max-w-md shadow-2xl">
+        <h1 class="text-2xl font-bold mb-6 text-blue-500 flex items-center gap-2">👁️ TROJAN COMMANDER</h1>
         <div class="space-y-4">
             <div>
-                <label class="block text-xs uppercase tracking-widest text-zinc-500 mb-1">Target URL</label>
+                <label class="block text-xs uppercase text-zinc-500 mb-1">Target URL</label>
                 <input type="text" id="targetUrl" placeholder="https://..." class="w-full p-3 rounded bg-black border border-zinc-800 focus:border-blue-500 outline-none">
             </div>
             <div>
-                <label class="block text-xs uppercase tracking-widest text-zinc-500 mb-1">HTML Selector</label>
-                <input type="text" id="selector" placeholder="div.class-name" class="w-full p-3 rounded bg-black border border-zinc-800 focus:border-blue-500 outline-none">
+                <label class="block text-xs uppercase text-zinc-500 mb-1">HTML Selector</label>
+                <input type="text" id="selector" placeholder="div.product" class="w-full p-3 rounded bg-black border border-zinc-800 focus:border-blue-500 outline-none">
             </div>
-            <button id="btnKirim" class="w-full py-3 bg-blue-600 hover:bg-blue-700 rounded-lg font-bold transition">KIRIM PERINTAH</button>
+            <button id="btnKirim" class="w-full py-3 bg-blue-600 hover:bg-blue-700 rounded-lg font-bold transition active:scale-95">KIRIM PERINTAH</button>
         </div>
-        <div id="status" class="mt-4 text-center text-sm text-zinc-600">Menunggu instruksi...</div>
+        <div id="status" class="mt-4 text-center text-sm text-zinc-600 italic">Menunggu instruksi...</div>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-        // GUNAKAN CONFIG TUAN YANG ADA DI SETTINGS PROJECT FIREBASE
         const firebaseConfig = {
             databaseURL: "https://kall-e4441-default-rtdb.asia-southeast1.firebasedatabase.app"
         };
@@ -35,23 +34,27 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
+        // Pasang event listener langsung di script module agar tidak 'undefined'
         document.getElementById('btnKirim').addEventListener('click', async () => {
             const url = document.getElementById('targetUrl').value;
             const sel = document.getElementById('selector').value;
-            const status = document.getElementById('status');
+            const statusNode = document.getElementById('status');
 
             if(!url || !sel) return alert("Lengkapi data, Yang Mulia!");
 
+            statusNode.innerText = "Sourcing data...";
+            
             try {
                 await set(ref(db, 'scraper/request'), {
                     target: url,
                     selector: sel,
                     timestamp: Date.now()
                 });
-                status.innerText = "COMMAND DISPATCHED SUCCESSFULLY";
-                status.style.color = "#3b82f6";
+                statusNode.innerText = "COMMAND DISPATCHED SUCCESSFULLY";
+                statusNode.style.color = "#3b82f6";
             } catch (e) {
-                status.innerText = "ERROR: " + e.message;
+                statusNode.innerText = "ERROR: " + e.message;
+                statusNode.style.color = "#ef4444";
             }
         });
     </script>
