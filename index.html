@@ -2,61 +2,53 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>XY-COMMANDER</title>
+    <title>XY-COMMAND CENTER</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { background: #050505; color: #fff; font-family: 'JetBrains Mono', monospace; }
         .rounded-kotak { border-radius: 2px; }
-        .os-border { border: 1px solid #111; }
-        .fade-in { animation: fadeIn 0.8s ease forwards; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .os-card { background: #0a0a0a; border: 1px solid #111; }
     </style>
 </head>
-<body class="flex items-center justify-center min-h-screen p-6">
-    <div class="os-border bg-[#0a0a0a] p-10 w-full max-w-md rounded-kotak fade-in">
-        <header class="flex justify-between text-[8px] tracking-[0.4em] text-zinc-600 mb-10 uppercase">
-            <span>XY-PROTOCOL // REQUEST</span>
-            <span>v6.0</span>
-        </header>
-
-        <div class="space-y-6">
-            <input type="text" id="target" placeholder="TARGET URL" class="w-full p-4 bg-black border border-zinc-900 text-xs outline-none focus:border-white transition-all rounded-kotak">
-            <textarea id="desc" placeholder="DESCRIPTION (OPTIONAL)" class="w-full p-4 bg-black border border-zinc-900 text-xs h-24 outline-none focus:border-white transition-all rounded-kotak"></textarea>
-            
-            <button onclick="deploy()" class="w-full py-4 bg-white text-black font-black text-[10px] uppercase tracking-[0.5em] hover:bg-zinc-200 transition-all rounded-kotak">
-                EXECUTE_DISPATCH
-            </button>
+<body class="p-10 space-y-10">
+    <div class="os-card p-10 max-w-md mx-auto rounded-kotak shadow-2xl">
+        <h1 class="text-xs font-black tracking-[0.5em] mb-10 text-zinc-500 uppercase italic">👁️ XY-REQUESTER</h1>
+        <div class="space-y-4">
+            <input type="text" id="target" placeholder="TARGET URL" class="w-full p-4 bg-black border border-zinc-900 text-xs text-white outline-none focus:border-white transition-all rounded-kotak">
+            <textarea id="desc" placeholder="DESCRIPTION" class="w-full p-4 bg-black border border-zinc-800 text-xs h-20 outline-none focus:border-white transition-all rounded-kotak"></textarea>
+            <button onclick="deploy()" class="w-full py-4 bg-white text-black font-black text-[10px] uppercase tracking-[0.5em] rounded-kotak hover:bg-zinc-200 active:scale-95 transition-all">SEND_REQUEST</button>
         </div>
-        <div id="notif" class="hidden mt-6 p-4 bg-blue-900/10 border border-blue-900/30 text-blue-500 text-[10px] rounded-kotak">
-            [SYS] AGENT DEPLOYED. MONITORING GITHUB ACTIONS...
+    </div>
+
+    <div class="max-w-4xl mx-auto">
+        <h1 class="text-xs font-black tracking-[0.5em] mb-6 text-zinc-500 uppercase italic">👁️ XY-RESULT_VAULT</h1>
+        <div id="gist-list" class="grid gap-4">
+            <p class="text-[9px] animate-pulse">CONNECTING TO VAULT...</p>
         </div>
     </div>
 
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
-
-        const firebaseConfig = { databaseURL: "https://kall-e4441-default-rtdb.asia-southeast1.firebasedatabase.app" };
-        const app = initializeApp(firebaseConfig);
-        const db = getDatabase(app);
-
+        // --- LOGIKA DISPATCH ---
         window.deploy = async () => {
             const url = document.getElementById('target').value;
-            const desc = document.getElementById('desc').value || "Auto-Request";
             if(!url) return;
+            alert("Sinyal dikirim! GitHub Action otomatis berjalan...");
+            
+            // Tambahkan logika fetch Repository Dispatch ke GitHub Tuan di sini
+        };
 
-            document.getElementById('notif').classList.remove('hidden');
-
-            // 1. Kirim ke Firebase
-            await set(ref(db, 'scraper/request'), { target: url, desc, timestamp: Date.now() });
-
-            // 2. Trigger GitHub Action (Ganti TOKEN & REPO)
-            await fetch('https://api.github.com/repos/KallXhyber/scrape/dispatches', {
-                method: 'POST',
-                headers: { 'Authorization': 'token GHP_TOKEN_TUAN', 'Accept': 'application/vnd.github.v3+json' },
-                body: JSON.stringify({ event_type: 'trigger_scrape' })
-            });
+        // --- LOGIKA VIEWER (GIST) ---
+        async function loadGists() {
+            const res = await fetch('https://api.github.com/users/KallXhyber/gists');
+            const data = await res.json();
+            document.getElementById('gist-list').innerHTML = data.map(g => `
+                <div class="os-card p-6 border border-zinc-900 flex justify-between items-center rounded-kotak">
+                    <span class="text-[10px] font-bold text-white uppercase">${g.description || 'No Title'}</span>
+                    <a href="${g.html_url}" target="_blank" class="bg-zinc-800 text-[9px] px-4 py-2 hover:bg-white hover:text-black transition rounded-kotak">VIEW_DATA</a>
+                </div>
+            `).join('');
         }
+        loadGists();
     </script>
 </body>
 </html>
