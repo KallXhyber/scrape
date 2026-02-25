@@ -12,73 +12,74 @@ from selenium_stealth import stealth
 
 FIREBASE_URL = "https://kall-e4441-default-rtdb.asia-southeast1.firebasedatabase.app/scraper/request.json"
 
-# POLA HARTA KARUN (API Keys, Endpoints, Secrets)
+# POLA HARTA KARUN (Regex Gacor)
 PATTERNS = {
-    "api_endpoints": r'https?://[\w\.-]+(?:/api/[\w\.-/]+|/v\d/[\w\.-/]+)',
-    "google_api": r'AIza[0-9A-Za-z-_]{35}',
-    "firebase_url": r'https://[\w\.-]+\.firebaseio\.com',
-    "jwt_token": r'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9\.[a-zA-Z0-9_-]+\.[a-zA-Z0-9_-]+',
-    "generic_key": r'(?i)(?:key|api|token|secret|auth|password|pwd)["\s:=>]+["\']?([a-zA-Z0-9-_\.]{16,})["\']?',
-    "email_pattern": r'[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}'
+    "api_endpoints": r'https?://[\w\.-]+(?:/api/[\w\.-/]+|/v\d/[\w\.-/]+|/graphql)',
+    "keys": r'(?i)(?:key|api|token|secret|auth|jwt|password)["\s:=>]+["\']?([a-zA-Z0-9-_\.]{16,})["\']?',
+    "firebase_links": r'https://[\w\.-]+\.firebaseio\.com',
+    "google_api": r'AIza[0-9A-Za-z-_]{35}'
 }
 
-def deep_mining(source_code):
-    findings = {}
-    for key, pattern in PATTERNS.items():
-        matches = re.findall(pattern, source_code)
-        if matches:
-            findings[key] = list(set(matches)) # Unik saja
-    return findings
-
 def harvest():
+    # 1. Ambil Perintah dari Markas (Firebase)
     res = requests.get(FIREBASE_URL).json()
-    if not res or not res.get('target'): return print("NO TARGET")
+    if not res or not res.get('target'): return print("SYSTEM IDLE: NO TARGET")
 
     target = res['target']
-    file_name = res.get('name', 'treasure_hunt')
+    file_path = res.get('path', 'default/output')
+    print(f"DEPLOYING ATTACK ON: {target}")
 
+    # 2. Setup Driver Gacor
     options = Options()
     options.add_argument("--headless")
     options.add_argument("--no-sandbox")
-    options.add_experimental_option("excludeSwitches", ["enable-automation"])
+    options.add_argument("--disable-dev-shm-usage")
+    # Aktifkan Logging Performance untuk Sniffing API
+    options.set_capability('goog:loggingPrefs', {'performance': 'ALL'})
     
     driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
     stealth(driver, languages=["en-US"], vendor="Google Inc.", platform="Win32", fix_hairline=True)
 
     try:
-        print(f"BREACHING TARGET: {target}")
         driver.get(target)
-        time.sleep(15) # Bypass Cloudflare
+        time.sleep(20) # Tunggu bypass Cloudflare & Render API
 
-        # Ambil seluruh HTML dan Script internal
+        # 3. Network Sniffing (Mencari URL API tersembunyi)
+        logs = driver.get_log('performance')
+        hidden_apis = []
+        for entry in logs:
+            msg = json.loads(entry['message'])['message']
+            if 'Network.request' in msg['method']:
+                url = msg['params']['request']['url']
+                if any(k in url.lower() for k in ['api', 'v1', 'v2', 'json', 'gql']):
+                    hidden_apis.append(url)
+
+        # 4. Deep Regex Mining (Cari API Key di Source Code)
         page_source = driver.page_source
-        scripts = [s.get_attribute('innerHTML') for s in driver.find_elements(By.TAG_NAME, "script") if s.get_attribute('innerHTML')]
-        full_text_to_scan = page_source + "\n".join(scripts)
+        treasures = {}
+        for key, pattern in PATTERNS.items():
+            matches = re.findall(pattern, page_source)
+            if matches: treasures[key] = list(set(matches))
 
-        # MULAI PENAMBANGAN HARTA KARUN
-        treasures = deep_mining(full_text_to_scan)
-
-        # Konten standar (Standard Content)
-        standard_content = {
-            "title": driver.title,
-            "all_links": [a.get_attribute('href') for a in driver.find_elements(By.TAG_NAME, "a") if a.get_attribute('href')],
-            "images": [img.get_attribute('src') for img in driver.find_elements(By.TAG_NAME, "img") if img.get_attribute('src')]
+        # 5. Bungkus Hasil
+        final_data = {
+            "meta": {"url": target, "time": time.ctime(), "engine": "Trojan-v2"},
+            "hidden_api_routes": list(set(hidden_apis)),
+            "leaked_keys": treasures,
+            "html_summary": {"title": driver.title, "links_count": len(driver.find_elements(By.TAG_NAME, "a"))}
         }
 
-        # BUNGKUS KE DALAM JAVASCRIPT
-        final_output = {
-            "target_info": {"url": target, "time": time.ctime()},
-            "treasures_found": treasures,
-            "standard_data": standard_content
-        }
-
-        js_wrapper = f"// TROJAN DEEP EXTRACTOR RESULT\nconst XY_TREASURE = {json.dumps(final_output, indent=4)};\nexport default XY_TREASURE;"
+        # 6. Simpan secara Terstruktur
+        output_js = f"// XY-TREASURE-REPORT\nexport const XY_DATA = {json.dumps(final_data, indent=4)};"
         
-        if not os.path.exists('hasil'): os.makedirs('hasil')
-        with open(f"hasil/{file_name}.js", "w", encoding="utf-8") as f:
-            f.write(js_wrapper)
+        full_dir = os.path.join('hasil', os.path.dirname(file_path))
+        if not os.path.exists(full_dir): os.makedirs(full_dir)
         
-        print(f"HARTA KARUN BERHASIL DIAMANKAN: hasil/{file_name}.js")
+        target_file = f"hasil/{file_path}.js"
+        with open(target_file, "w", encoding="utf-8") as f:
+            f.write(output_js)
+        
+        print(f"SUCCESS: Data tersimpan di {target_file}")
 
     except Exception as e: print(f"CRITICAL ERROR: {e}")
     finally: driver.quit()
