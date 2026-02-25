@@ -1,41 +1,28 @@
 name: Trojan Auto Scraper Engine
-
 on:
   schedule:
     - cron: '0 * * * *'
   workflow_dispatch:
-
 jobs:
   scrape_job:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-
     steps:
-      - name: Checkout Code
+      - name: Checkout
         uses: actions/checkout@v4
-
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.10'
-
-      - name: Install Libraries
-        run: pip install -r requirements.txt
-
-      - name: Run Scraper
+      - name: Install
+        run: pip install selenium selenium-stealth requests webdriver-manager
+      - name: Run
         run: python scraper.py
-
-      - name: Push Results
+      - name: Push to Repository
         run: |
           git config --global user.name "Trojan-Bot"
           git config --global user.email "haekalsaputra01h@gmail.com"
-          
-          # Paksa git untuk mendeteksi folder hasil/ dan file di dalamnya
-          git add -A
-          
-          # Hanya commit jika ada perubahan agar tidak error
-          git commit -m "New Treasure Harvested: [$(date)]" || echo "No changes to commit"
-          
-          # Push hasil ke repository
+          git add hasil/ # Paksa folder hasil masuk
+          git commit -m "Auto Harvest [$(date)]" || echo "No changes"
           git push
