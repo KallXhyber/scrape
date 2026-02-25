@@ -1,84 +1,49 @@
-import os
-import time
-import requests
+import undetected_chromedriver as uc
 import pandas as pd
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.chrome.service import Service
-from webdriver_manager.chrome import ChromeDriverManager
-from selenium.webdriver.common.by import By
+import requests
+import time
+import os
 
-# KONFIGURASI FIREBASE TUAN
-# Pastikan tambahkan .json di akhir URL untuk akses REST API
-FIREBASE_URL = "# SESUAIKAN DENGAN URL DATABASE TUAN
-FIREBASE_URL = "https://kall-e4441-default-rtdb.asia-southeast1.firebasedatabase.app/scraper/request.json""
+# API ENDPOINT FIREBASE TUAN
+FIREBASE_URL = "https://kall-e4441-default-rtdb.asia-southeast1.firebasedatabase.app/scraper/request.json"
 
-def get_remote_command():
-    """Mengambil perintah dari dashboard web tuan"""
+def get_command():
     try:
-        response = requests.get(FIREBASE_URL)
-        if response.status_code == 200:
-            return response.json()
-        return None
-    except Exception as e:
-        print(f"FAILED TO FETCH COMMAND: {e}")
-        return None
+        r = requests.get(FIREBASE_URL)
+        return r.json()
+    except: return None
 
-def trojan_execute_scrape():
-    print("INITIALIZING TROJAN SCRAPER...")
-    command = get_remote_command()
+def harvest():
+    cmd = get_command()
+    if not cmd: return print("NO TASK")
+
+    print(f"ATTACKING: {cmd['target']}")
+
+    options = uc.ChromeOptions()
+    options.add_argument('--headless') # Tetap bisa tembus meski headless
+    options.add_argument('--no-sandbox')
     
-    if not command:
-        print("NO COMMAND FOUND OR FIREBASE ERROR. ABORTING.")
-        return
-
-    target_url = command.get('target')
-    selector = command.get('selector')
-    
-    print(f"TARGET ACQUIRED: {target_url}")
-    print(f"SELECTOR SET: {selector}")
-
-    # Headless Mode untuk Cloud Execution
-    chrome_options = Options()
-    chrome_options.add_argument("--headless")
-    chrome_options.add_argument("--no-sandbox")
-    chrome_options.add_argument("--disable-dev-shm-usage")
-    chrome_options.add_argument("--window-size=1920,1080")
-    chrome_options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
-
-    driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
+    # Inisialisasi driver anti-detect
+    driver = uc.Chrome(options=options)
     
     try:
-        driver.get(target_url)
-        time.sleep(10) # Menunggu loading halaman, bisa disesuaikan
+        driver.get(cmd['target'])
+        time.sleep(15) # Cloudflare butuh waktu untuk verifikasi 'Checking your browser'
 
-        # Eksekusi pengambilan data secara massal
-        elements = driver.find_elements(By.CSS_SELECTOR, selector)
-        harvested_data = []
+        elements = driver.find_elements(uc.By.CSS_SELECTOR, cmd['selector'])
+        data = [{"content": e.text, "time": time.ctime()} for e in elements if e.text]
 
-        for index, el in enumerate(elements):
-            text_content = el.text.strip()
-            if text_content:
-                harvested_data.append({
-                    "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
-                    "source": target_url,
-                    "id": index + 1,
-                    "data": text_content
-                })
-
-        if harvested_data:
-            df = pd.DataFrame(harvested_data)
-            output_file = "results.csv"
-            # Append data jika file sudah ada, jika tidak buat baru
-            df.to_csv(output_file, index=False, mode='a', header=not os.path.exists(output_file))
-            print(f"SUCCESS: {len(harvested_data)} ITEMS HARVESTED.")
+        if data:
+            df = pd.DataFrame(data)
+            df.to_csv("results.csv", index=False, mode='a', header=not os.path.exists("results.csv"))
+            print("HARVEST SUCCESS")
         else:
-            print("WARNING: NO DATA FOUND WITH THAT SELECTOR.")
+            print("FAILED: SELECTOR NOT FOUND OR BLOCKED")
 
     except Exception as e:
-        print(f"CRITICAL ERROR DURING SCRAPE: {e}")
+        print(f"CRITICAL: {e}")
     finally:
         driver.quit()
 
 if __name__ == "__main__":
-    trojan_execute_scrape()
+    harvest()
