@@ -1,35 +1,45 @@
-name: XY Trojan Node Scraper
+name: XY-ULTIMATE-EXTRACTOR
 
 on:
   repository_dispatch:
     types: [trigger_scrape]
-  workflow_dispatch:
+  workflow_dispatch: # Masih bisa di-run manual buat testing
 
 jobs:
-  scrape:
+  penetration:
     runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
+    
+    # Memberi izin tulis agar bot bisa push hasil (jika perlu)
+    permissions:
+      contents: write
       
-      - name: Setup Node.js
+    steps:
+      - name: [XY] Checkout Code
+        uses: actions/checkout@v4
+      
+      - name: [XY] Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          # Hapus baris cache: 'npm' sementara agar tidak error lock file
+          cache: 'npm' # Biar npm install di run kedua kilat
           
-      - name: Install Dependencies
-        # Pakai npm install biasa dulu
+      - name: [XY] Install Dependencies
         run: npm install
         
-      - name: Run Scraper
+      - name: [XY] Install Playwright Browsers
+        # Step ini WAJIB biar Playwright punya 'senjata' buat nembus web
+        run: npx playwright install chromium --with-deps
+        
+      - name: [XY] Execute Deep Scraper
         run: node scraper.js
         env:
           XY_GIST_TOKEN: ${{ secrets.XY_GIST_TOKEN }}
+          # Pastikan secret ini sudah tuan buat di Settings Repo
           
-      - name: Push Result
+      - name: [XY] Push Backup to Repo
         run: |
           git config --global user.name "Trojan-Bot"
           git config --global user.email "haekalsaputra01h@gmail.com"
           git add .
-          git commit -m "Auto Harvest [$(date)]" || echo "No changes"
+          git commit -m "Auto-Harvest: [$(date)]" || echo "No changes"
           git push
