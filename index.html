@@ -2,33 +2,48 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>XY-COMMAND CENTER</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { background-color: #080808; color: #3b82f6; font-family: 'Consolas', monospace; }
-        .terminal-box { border: 1px solid #1e1e1e; background: rgba(13, 13, 13, 0.9); }
-        .neon-text { text-shadow: 0 0 10px rgba(59, 130, 246, 0.5); }
+        body { background-color: #050505; color: #fff; font-family: 'JetBrains Mono', monospace; }
+        .os-card { background: #0a0a0a; border: 1px solid #141414; }
+        .rounded-kotak { border-radius: 2px; }
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(30px); filter: blur(10px); }
+            to { opacity: 1; transform: translateY(0); filter: blur(0); }
+        }
+        .animate-os { animation: slideIn 1s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
     </style>
 </head>
-<body class="flex items-center justify-center min-h-screen p-4">
-    <div class="terminal-box p-8 rounded-2xl w-full max-w-lg shadow-2xl">
-        <div class="flex justify-between mb-6 border-b border-zinc-800 pb-2">
-            <span class="neon-text text-xs tracking-widest font-bold">XY-OS v3.0 :: ROOT_ACCESS</span>
-            <span class="text-zinc-600 text-xs">STATUS: ONLINE</span>
-        </div>
+<body class="flex flex-col items-center justify-center min-h-screen p-6">
+    <header class="fixed top-0 w-full p-8 flex justify-between items-center text-[9px] tracking-[0.5em] text-zinc-700 uppercase">
+        <div>XY-SYSTEMS // V4.0.1</div>
+        <div class="hover:text-white cursor-pointer transition-colors duration-500">Support & Feedback</div>
+    </header>
 
-        <div class="space-y-4">
-            <input type="text" id="target" placeholder="TARGET URL (https://...)" 
-                class="w-full bg-black border border-zinc-800 p-4 rounded-lg focus:border-blue-500 outline-none text-blue-400 text-sm">
+    <div class="os-card p-12 w-full max-w-md shadow-[0_0_50px_rgba(0,0,0,0.5)] animate-os rounded-kotak">
+        <div class="mb-10">
+            <h1 class="text-xl font-black italic tracking-tighter text-white">👁️ TROJAN_GIST</h1>
+            <div class="h-[1px] w-12 bg-white mt-2"></div>
+        </div>
+        
+        <div class="space-y-8">
+            <div class="relative">
+                <label class="text-[8px] uppercase tracking-[0.3em] text-zinc-500 mb-2 block">Target Protocol</label>
+                <input type="text" id="target" placeholder="HTTPS://TARGET-BREACH.COM" 
+                    class="w-full bg-black border border-zinc-900 p-4 text-xs text-white outline-none focus:border-zinc-500 transition-all duration-700 rounded-kotak">
+            </div>
             
-            <button onclick="deploy()" class="w-full bg-blue-600 hover:bg-blue-500 text-black font-black py-4 rounded-lg transition-all active:scale-95 tracking-[0.5em]">
-                DEPLOY_HUNT
+            <button onclick="deploy()" 
+                class="w-full py-5 bg-white text-black font-black text-[10px] uppercase tracking-[0.6em] hover:bg-zinc-200 active:scale-[0.98] transition-all duration-500 rounded-kotak shadow-xl shadow-white/5">
+                SEND_DISPATCH
             </button>
         </div>
 
-        <div id="logs" class="mt-8 text-[10px] text-zinc-500 h-24 overflow-y-auto">
-            > System ready...<br>
-            > Waiting for command...
+        <div id="status" class="mt-12 text-[9px] font-mono text-zinc-800 leading-loose uppercase border-t border-zinc-900 pt-6">
+            > [SYS] SYSTEM_READY<br>
+            > [LOG] PoweredBy Kall & XyTeam
         </div>
     </div>
 
@@ -36,24 +51,41 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
+        // Gunakan Firebase tuan
         const firebaseConfig = { databaseURL: "https://kall-e4441-default-rtdb.asia-southeast1.firebasedatabase.app" };
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
         window.deploy = async () => {
             const url = document.getElementById('target').value;
+            const logBox = document.getElementById('status');
             if(!url) return;
-            
-            const logBox = document.getElementById('logs');
-            const domain = new URL(url).hostname.replace(/\./g, '_');
 
-            logBox.innerHTML += `<br>> TARGET LOCKED: ${domain}`;
-            await set(ref(db, 'scraper/request'), {
-                target: url,
-                path: `auto/${domain}`,
-                timestamp: Date.now()
-            });
-            logBox.innerHTML += `<br>> SIGNAL SENT. CHECK GITHUB ACTIONS.`;
+            logBox.innerHTML += `<br><span class="text-zinc-400">> [OK] DISPATCHING SIGNAL...</span>`;
+            
+            try {
+                // 1. Kirim Target ke Firebase
+                await set(ref(db, 'scraper/request'), {
+                    target: url,
+                    timestamp: Date.now()
+                });
+
+                // 2. Trigger GitHub Action via Dispatch
+                // Pastikan ganti TOKEN dan REPO_OWNER dengan data asli
+                const GITHUB_TOKEN = "GANTI_DENGAN_TOKEN_TUAN"; 
+                await fetch(`https://api.github.com/repos/KallXhyber/scrape/dispatches`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `token ${GITHUB_TOKEN}`,
+                        'Accept': 'application/vnd.github.v3+json'
+                    },
+                    body: JSON.stringify({ event_type: 'trigger_scrape' })
+                });
+
+                logBox.innerHTML += `<br><span class="text-white">> [OK] GITHUB_ACTIONS_EXECUTED</span>`;
+            } catch (e) {
+                logBox.innerHTML += `<br><span class="text-red-900">> [ERR] SIGNAL_LOST</span>`;
+            }
         }
     </script>
 </body>
