@@ -10,9 +10,9 @@ from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.common.by import By
 from selenium_stealth import stealth
 
+# URL DATABASE TUAN
 FIREBASE_URL = "https://kall-e4441-default-rtdb.asia-southeast1.firebasedatabase.app/scraper/request.json"
 
-# POLA HARTA KARUN (Regex Gacor)
 PATTERNS = {
     "api_endpoints": r'https?://[\w\.-]+(?:/api/[\w\.-/]+|/v\d/[\w\.-/]+|/graphql)',
     "keys": r'(?i)(?:key|api|token|secret|auth|jwt|password)["\s:=>]+["\']?([a-zA-Z0-9-_\.]{16,})["\']?',
@@ -21,20 +21,32 @@ PATTERNS = {
 }
 
 def harvest():
-    # 1. Ambil Perintah dari Markas (Firebase)
-    res = requests.get(FIREBASE_URL).json()
-    if not res or not res.get('target'): return print("SYSTEM IDLE: NO TARGET")
+    print("CHECKING COMMAND CENTER...")
+    try:
+        res = requests.get(FIREBASE_URL).json()
+    except Exception as e:
+        print(f"FAILED TO CONNECT FIREBASE: {e}")
+        return
 
-    target = res['target']
-    file_path = res.get('path', 'default/output')
+    # FIX SCREENSHOT 7: Cek apakah data ada
+    if not res:
+        print("DATABASE EMPTY (NULL).")
+        return
+
+    # Ambil data dengan aman (pake .get agar tidak error key)
+    target = res.get('target')
+    file_path = res.get('path') or res.get('name') or 'default/output'
+    
+    if not target:
+        print("NO TARGET URL DEFINED IN FIREBASE.")
+        return
+
     print(f"DEPLOYING ATTACK ON: {target}")
 
-    # 2. Setup Driver Gacor
     options = Options()
     options.add_argument("--headless")
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
-    # Aktifkan Logging Performance untuk Sniffing API
     options.set_capability('goog:loggingPrefs', {'performance': 'ALL'})
     
     driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
@@ -42,47 +54,48 @@ def harvest():
 
     try:
         driver.get(target)
-        time.sleep(20) # Tunggu bypass Cloudflare & Render API
+        time.sleep(20) # Tunggu render & bypass
 
-        # 3. Network Sniffing (Mencari URL API tersembunyi)
+        # Sniffing Network
         logs = driver.get_log('performance')
         hidden_apis = []
         for entry in logs:
             msg = json.loads(entry['message'])['message']
             if 'Network.request' in msg['method']:
-                url = msg['params']['request']['url']
-                if any(k in url.lower() for k in ['api', 'v1', 'v2', 'json', 'gql']):
-                    hidden_apis.append(url)
+                u = msg['params']['request']['url']
+                if any(k in u.lower() for k in ['api', 'v1', 'v2', 'json', 'gql']):
+                    hidden_apis.append(u)
 
-        # 4. Deep Regex Mining (Cari API Key di Source Code)
+        # Mining Source Code
         page_source = driver.page_source
         treasures = {}
         for key, pattern in PATTERNS.items():
             matches = re.findall(pattern, page_source)
             if matches: treasures[key] = list(set(matches))
 
-        # 5. Bungkus Hasil
+        # Build Output
         final_data = {
-            "meta": {"url": target, "time": time.ctime(), "engine": "Trojan-v2"},
-            "hidden_api_routes": list(set(hidden_apis)),
-            "leaked_keys": treasures,
-            "html_summary": {"title": driver.title, "links_count": len(driver.find_elements(By.TAG_NAME, "a"))}
+            "meta": {"url": target, "time": time.ctime(), "status": "HackedByTrojan"},
+            "found_apis": list(set(hidden_apis)),
+            "leaked_secrets": treasures
         }
 
-        # 6. Simpan secara Terstruktur
-        output_js = f"// XY-TREASURE-REPORT\nexport const XY_DATA = {json.dumps(final_data, indent=4)};"
+        # Save Logic
+        output_content = f"export const XY_EXTRACTED = {json.dumps(final_data, indent=4)};"
         
-        full_dir = os.path.join('hasil', os.path.dirname(file_path))
-        if not os.path.exists(full_dir): os.makedirs(full_dir)
+        # Buat Path
+        save_path = f"hasil/{file_path}.js"
+        os.makedirs(os.path.dirname(save_path), exist_ok=True)
         
-        target_file = f"hasil/{file_path}.js"
-        with open(target_file, "w", encoding="utf-8") as f:
-            f.write(output_js)
+        with open(save_path, "w", encoding="utf-8") as f:
+            f.write(output_content)
         
-        print(f"SUCCESS: Data tersimpan di {target_file}")
+        print(f"DATA SECURED AT: {save_path}")
 
-    except Exception as e: print(f"CRITICAL ERROR: {e}")
-    finally: driver.quit()
+    except Exception as e:
+        print(f"CRITICAL ERROR DURING DEPLOY: {e}")
+    finally:
+        driver.quit()
 
 if __name__ == "__main__":
     harvest()
