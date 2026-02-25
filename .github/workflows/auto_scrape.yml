@@ -1,9 +1,9 @@
 name: XY Trojan Node Scraper
 
 on:
-  schedule:
-    - cron: '0 * * * *'
-  workflow_dispatch:
+  repository_dispatch:
+    types: [trigger_scrape] # Hanya jalan kalau dipanggil dari Web
+  workflow_dispatch: # Masih bisa di-run manual dari tombol GitHub
 
 jobs:
   scrape:
@@ -15,17 +15,20 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
+          cache: 'npm' # Mengaktifkan Cache biar npm install kilat
           
       - name: Install Dependencies
-        run: npm install
+        run: npm ci --prefer-offline # Mode ngebut, ambil dari cache kalau ada
         
       - name: Run Scraper
         run: node scraper.js
-        
+        env:
+          XY_GIST_TOKEN: ${{ secrets.XY_GIST_TOKEN }}
+          
       - name: Push Result
         run: |
           git config --global user.name "Trojan-Bot"
           git config --global user.email "haekalsaputra01h@gmail.com"
           git add hasil/
-          git commit -m "Auto Harvest Node [$(date)]" || echo "No changes"
+          git commit -m "Auto Harvest [$(date)]" || echo "No changes"
           git push
