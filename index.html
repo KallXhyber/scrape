@@ -3,26 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>XY-CONTROL PANEL</title>
+    <title>XY-COMMAND CENTER</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-[#050505] text-zinc-300 flex items-center justify-center min-h-screen p-4">
-    <div class="bg-zinc-900 border border-blue-900/30 p-8 rounded-3xl w-full max-w-md shadow-[0_0_50px_rgba(0,0,255,0.1)]">
-        <h1 class="text-2xl font-black mb-6 text-blue-500 tracking-tighter">👁️ TROJAN BLIND-EXTRACTOR</h1>
+<body class="bg-[#050505] text-zinc-300 flex items-center justify-center min-h-screen p-4 font-mono">
+    <div class="bg-zinc-900 border-2 border-blue-600/20 p-8 rounded-3xl w-full max-w-md shadow-[0_0_60px_rgba(0,100,255,0.15)]">
+        <h1 class="text-2xl font-black mb-1 text-blue-500 tracking-tighter uppercase italic">👁️ Trojan Ultimate</h1>
+        <p class="text-[10px] text-zinc-500 mb-6 tracking-widest uppercase">Deep Extraction System v2.0</p>
+        
         <div class="space-y-5">
             <div>
-                <label class="block text-[10px] uppercase font-bold text-zinc-500 mb-1 ml-1">Nama Request (Akan jadi nama file)</label>
-                <input type="text" id="reqName" placeholder="contoh_scrape" class="w-full p-4 rounded-xl bg-black border border-zinc-800 focus:border-blue-600 outline-none transition-all">
+                <label class="block text-[9px] uppercase font-bold text-blue-400 mb-1 ml-1 tracking-widest">Path Penyimpanan (Contoh: test/tes)</label>
+                <input type="text" id="filePath" placeholder="folder/nama_file" class="w-full p-4 rounded-xl bg-black border border-zinc-800 focus:border-blue-600 outline-none transition-all text-sm">
             </div>
             <div>
-                <label class="block text-[10px] uppercase font-bold text-zinc-500 mb-1 ml-1">URL Target</label>
-                <input type="text" id="targetUrl" placeholder="https://target-ganas.com" class="w-full p-4 rounded-xl bg-black border border-zinc-800 focus:border-blue-600 outline-none transition-all">
+                <label class="block text-[9px] uppercase font-bold text-blue-400 mb-1 ml-1 tracking-widest">URL Target Utama</label>
+                <input type="text" id="targetUrl" placeholder="https://target-harta-karun.com" class="w-full p-4 rounded-xl bg-black border border-zinc-800 focus:border-blue-600 outline-none transition-all text-sm">
             </div>
-            <button id="btnExecute" class="w-full py-4 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-black tracking-widest transition-all active:scale-95 shadow-lg shadow-blue-900/20">
-                EXECUTE ATTACK
+            <button id="btnDeploy" class="w-full py-4 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-black tracking-[0.2em] transition-all active:scale-95 shadow-lg shadow-blue-900/40">
+                DEPLOY ATTACK
             </button>
         </div>
-        <div id="status" class="mt-6 text-center text-xs font-mono text-zinc-600 uppercase tracking-tighter">System Idle...</div>
+        <div id="status" class="mt-6 text-center text-[10px] text-zinc-600 uppercase tracking-widest animate-pulse">Menunggu Instruksi...</div>
     </div>
 
     <script type="module">
@@ -33,24 +35,24 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
-        document.getElementById('btnExecute').addEventListener('click', async () => {
-            const name = document.getElementById('reqName').value.replace(/\s+/g, '_');
+        document.getElementById('btnDeploy').addEventListener('click', async () => {
+            const path = document.getElementById('filePath').value;
             const url = document.getElementById('targetUrl').value;
-            const status = document.getElementById('status');
+            const statusNode = document.getElementById('status');
 
-            if(!name || !url) return alert("Identitas target belum lengkap, Yang Mulia!");
+            if(!path || !url) return alert("Data belum lengkap, Yang Mulia!");
 
-            status.innerText = "Transmitting to Trojan Core...";
+            statusNode.innerText = "Transmitting Command...";
             try {
                 await set(ref(db, 'scraper/request'), {
-                    name: name,
+                    path: path,
                     target: url,
                     timestamp: Date.now()
                 });
-                status.innerText = "TARGET LOCKED. SCRIPT DEPLOYED.";
-                status.classList.add("text-blue-400");
+                statusNode.innerText = "TARGET LOCKED. AUTO-RUNNING ON CLOUD.";
+                statusNode.classList.replace("text-zinc-600", "text-blue-400");
             } catch (e) {
-                status.innerText = "FAILED: " + e.message;
+                statusNode.innerText = "FAILED: " + e.message;
             }
         });
     </script>
