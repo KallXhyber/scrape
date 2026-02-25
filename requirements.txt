@@ -1,5 +1,5 @@
 selenium
 selenium-stealth
-pandas
 requests
 webdriver-manager
+pandas
