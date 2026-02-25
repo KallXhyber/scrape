@@ -2,48 +2,33 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>XY-COMMAND CENTER</title>
+    <title>XY-COMMANDER</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { background-color: #050505; color: #fff; font-family: 'JetBrains Mono', monospace; }
-        .os-card { background: #0a0a0a; border: 1px solid #141414; }
+        body { background: #050505; color: #fff; font-family: 'JetBrains Mono', monospace; }
         .rounded-kotak { border-radius: 2px; }
-        @keyframes slideIn {
-            from { opacity: 0; transform: translateY(30px); filter: blur(10px); }
-            to { opacity: 1; transform: translateY(0); filter: blur(0); }
-        }
-        .animate-os { animation: slideIn 1s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        .os-border { border: 1px solid #111; }
+        .fade-in { animation: fadeIn 0.8s ease forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
-<body class="flex flex-col items-center justify-center min-h-screen p-6">
-    <header class="fixed top-0 w-full p-8 flex justify-between items-center text-[9px] tracking-[0.5em] text-zinc-700 uppercase">
-        <div>XY-SYSTEMS // V4.0.1</div>
-        <div class="hover:text-white cursor-pointer transition-colors duration-500">Support & Feedback</div>
-    </header>
+<body class="flex items-center justify-center min-h-screen p-6">
+    <div class="os-border bg-[#0a0a0a] p-10 w-full max-w-md rounded-kotak fade-in">
+        <header class="flex justify-between text-[8px] tracking-[0.4em] text-zinc-600 mb-10 uppercase">
+            <span>XY-PROTOCOL // REQUEST</span>
+            <span>v6.0</span>
+        </header>
 
-    <div class="os-card p-12 w-full max-w-md shadow-[0_0_50px_rgba(0,0,0,0.5)] animate-os rounded-kotak">
-        <div class="mb-10">
-            <h1 class="text-xl font-black italic tracking-tighter text-white">👁️ TROJAN_GIST</h1>
-            <div class="h-[1px] w-12 bg-white mt-2"></div>
-        </div>
-        
-        <div class="space-y-8">
-            <div class="relative">
-                <label class="text-[8px] uppercase tracking-[0.3em] text-zinc-500 mb-2 block">Target Protocol</label>
-                <input type="text" id="target" placeholder="HTTPS://TARGET-BREACH.COM" 
-                    class="w-full bg-black border border-zinc-900 p-4 text-xs text-white outline-none focus:border-zinc-500 transition-all duration-700 rounded-kotak">
-            </div>
+        <div class="space-y-6">
+            <input type="text" id="target" placeholder="TARGET URL" class="w-full p-4 bg-black border border-zinc-900 text-xs outline-none focus:border-white transition-all rounded-kotak">
+            <textarea id="desc" placeholder="DESCRIPTION (OPTIONAL)" class="w-full p-4 bg-black border border-zinc-900 text-xs h-24 outline-none focus:border-white transition-all rounded-kotak"></textarea>
             
-            <button onclick="deploy()" 
-                class="w-full py-5 bg-white text-black font-black text-[10px] uppercase tracking-[0.6em] hover:bg-zinc-200 active:scale-[0.98] transition-all duration-500 rounded-kotak shadow-xl shadow-white/5">
-                SEND_DISPATCH
+            <button onclick="deploy()" class="w-full py-4 bg-white text-black font-black text-[10px] uppercase tracking-[0.5em] hover:bg-zinc-200 transition-all rounded-kotak">
+                EXECUTE_DISPATCH
             </button>
         </div>
-
-        <div id="status" class="mt-12 text-[9px] font-mono text-zinc-800 leading-loose uppercase border-t border-zinc-900 pt-6">
-            > [SYS] SYSTEM_READY<br>
-            > [LOG] PoweredBy Kall & XyTeam
+        <div id="notif" class="hidden mt-6 p-4 bg-blue-900/10 border border-blue-900/30 text-blue-500 text-[10px] rounded-kotak">
+            [SYS] AGENT DEPLOYED. MONITORING GITHUB ACTIONS...
         </div>
     </div>
 
@@ -51,41 +36,26 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-        // Gunakan Firebase tuan
         const firebaseConfig = { databaseURL: "https://kall-e4441-default-rtdb.asia-southeast1.firebasedatabase.app" };
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
         window.deploy = async () => {
             const url = document.getElementById('target').value;
-            const logBox = document.getElementById('status');
+            const desc = document.getElementById('desc').value || "Auto-Request";
             if(!url) return;
 
-            logBox.innerHTML += `<br><span class="text-zinc-400">> [OK] DISPATCHING SIGNAL...</span>`;
-            
-            try {
-                // 1. Kirim Target ke Firebase
-                await set(ref(db, 'scraper/request'), {
-                    target: url,
-                    timestamp: Date.now()
-                });
+            document.getElementById('notif').classList.remove('hidden');
 
-                // 2. Trigger GitHub Action via Dispatch
-                // Pastikan ganti TOKEN dan REPO_OWNER dengan data asli
-                const GITHUB_TOKEN = "GANTI_DENGAN_TOKEN_TUAN"; 
-                await fetch(`https://api.github.com/repos/KallXhyber/scrape/dispatches`, {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `token ${GITHUB_TOKEN}`,
-                        'Accept': 'application/vnd.github.v3+json'
-                    },
-                    body: JSON.stringify({ event_type: 'trigger_scrape' })
-                });
+            // 1. Kirim ke Firebase
+            await set(ref(db, 'scraper/request'), { target: url, desc, timestamp: Date.now() });
 
-                logBox.innerHTML += `<br><span class="text-white">> [OK] GITHUB_ACTIONS_EXECUTED</span>`;
-            } catch (e) {
-                logBox.innerHTML += `<br><span class="text-red-900">> [ERR] SIGNAL_LOST</span>`;
-            }
+            // 2. Trigger GitHub Action (Ganti TOKEN & REPO)
+            await fetch('https://api.github.com/repos/KallXhyber/scrape/dispatches', {
+                method: 'POST',
+                headers: { 'Authorization': 'token GHP_TOKEN_TUAN', 'Accept': 'application/vnd.github.v3+json' },
+                body: JSON.stringify({ event_type: 'trigger_scrape' })
+            });
         }
     </script>
 </body>
