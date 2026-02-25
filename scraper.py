@@ -15,33 +15,37 @@ def get_command():
 
 def harvest():
     cmd = get_command()
-    if not cmd: return print("NO TASK")
+    if not cmd or not cmd.get('target'): 
+        print("NO VALID TASK IN FIREBASE")
+        return
 
-    print(f"ATTACKING: {cmd['target']}")
+    print(f"ATTACKING TARGET: {cmd['target']}")
 
     options = uc.ChromeOptions()
-    options.add_argument('--headless') # Tetap bisa tembus meski headless
+    options.add_argument('--headless')
     options.add_argument('--no-sandbox')
+    options.add_argument('--disable-dev-shm-usage')
     
-    # Inisialisasi driver anti-detect
+    # Bypass deteksi bot level tinggi
     driver = uc.Chrome(options=options)
     
     try:
         driver.get(cmd['target'])
-        time.sleep(15) # Cloudflare butuh waktu untuk verifikasi 'Checking your browser'
+        time.sleep(15) # Menunggu Cloudflare Turnstile/Challenge selesai
 
         elements = driver.find_elements(uc.By.CSS_SELECTOR, cmd['selector'])
-        data = [{"content": e.text, "time": time.ctime()} for e in elements if e.text]
+        data = [{"content": e.text.strip(), "time": time.strftime("%H:%M:%S")} for e in elements if e.text.strip()]
 
         if data:
             df = pd.DataFrame(data)
-            df.to_csv("results.csv", index=False, mode='a', header=not os.path.exists("results.csv"))
-            print("HARVEST SUCCESS")
+            output = "results.csv"
+            df.to_csv(output, index=False, mode='a', header=not os.path.exists(output))
+            print(f"SUCCESS: {len(data)} ITEMS HARVESTED")
         else:
-            print("FAILED: SELECTOR NOT FOUND OR BLOCKED")
+            print("FAILED: NO DATA FOUND OR BLOCKED BY CLOUDFLARE")
 
     except Exception as e:
-        print(f"CRITICAL: {e}")
+        print(f"CRITICAL ERROR: {e}")
     finally:
         driver.quit()
 
