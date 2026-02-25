@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>XY-VIEWER</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-[#050505] text-zinc-400 p-10">
+    <div class="max-w-4xl mx-auto">
+        <h1 class="text-white font-black text-2xl italic mb-10 tracking-tighter">👁️ XY-GIST_RESULTS</h1>
+        <div id="result-container" class="grid gap-4">
+            <p class="text-[10px] animate-pulse">CONNECTING TO SECURE GIST VAULT...</p>
+        </div>
+    </div>
+
+    <script>
+        async function loadGists() {
+            const container = document.getElementById('result-container');
+            try {
+                // Ambil daftar Gist publik dari user tuan
+                const res = await fetch('https://api.github.com/users/KallXhyber/gists');
+                const gists = await res.json();
+                
+                container.innerHTML = gists.map(g => `
+                    <div class="bg-[#0a0a0a] border border-zinc-900 p-6 rounded-[2px] hover:border-zinc-500 transition-all">
+                        <div class="flex justify-between items-center">
+                            <span class="text-white text-xs font-bold">${g.description || 'No Title'}</span>
+                            <a href="${g.html_url}" target="_blank" class="text-[9px] bg-white text-black px-3 py-1 font-bold">OPEN_VAULT</a>
+                        </div>
+                        <div class="mt-4 text-[9px] text-zinc-600 uppercase tracking-widest">Created: ${g.created_at}</div>
+                    </div>
+                `).join('');
+            } catch (e) { container.innerHTML = "VAULT ACCESS DENIED."; }
+        }
+        loadGists();
+    </script>
+</body>
+</html>
