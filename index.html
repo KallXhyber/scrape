@@ -3,28 +3,39 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>XY-COMMAND CENTER</title>
+    <title>XY-DARK OS</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { background-color: #000; font-family: 'Courier New', Courier, monospace; }
+        .os-border { border: 1px solid #1a1a1a; box-shadow: 0 0 20px rgba(59, 130, 246, 0.1); }
+        .glass { background: rgba(10, 10, 10, 0.8); backdrop-filter: blur(10px); }
+    </style>
 </head>
-<body class="bg-[#050505] text-zinc-300 flex items-center justify-center min-h-screen p-4 font-mono">
-    <div class="bg-zinc-900 border-2 border-blue-600/20 p-8 rounded-3xl w-full max-w-md shadow-[0_0_60px_rgba(0,100,255,0.15)]">
-        <h1 class="text-2xl font-black mb-1 text-blue-500 tracking-tighter uppercase italic">👁️ Trojan Ultimate</h1>
-        <p class="text-[10px] text-zinc-500 mb-6 tracking-widest uppercase">Deep Extraction System v2.0</p>
-        
-        <div class="space-y-5">
+<body class="text-zinc-400 flex items-center justify-center min-h-screen p-6">
+    <div class="glass os-border p-8 rounded-lg w-full max-w-lg relative overflow-hidden">
+        <div class="flex items-center gap-2 mb-8 border-b border-zinc-800 pb-4">
+            <div class="w-3 h-3 rounded-full bg-red-500/50"></div>
+            <div class="w-3 h-3 rounded-full bg-yellow-500/50"></div>
+            <div class="w-3 h-3 rounded-full bg-green-500/50"></div>
+            <span class="ml-4 text-[10px] uppercase tracking-[0.3em] text-blue-500 font-bold">XY-SYSTEMS :: CORE_EXTRACTOR</span>
+        </div>
+
+        <div class="space-y-6">
             <div>
-                <label class="block text-[9px] uppercase font-bold text-blue-400 mb-1 ml-1 tracking-widest">Path Penyimpanan (Contoh: test/tes)</label>
-                <input type="text" id="filePath" placeholder="folder/nama_file" class="w-full p-4 rounded-xl bg-black border border-zinc-800 focus:border-blue-600 outline-none transition-all text-sm">
+                <label class="block text-[10px] uppercase mb-2 text-zinc-600 tracking-widest">Target Breach URL</label>
+                <input type="text" id="targetUrl" placeholder="https://..." 
+                    class="w-full p-4 rounded bg-black border border-zinc-800 focus:border-blue-600 text-blue-400 outline-none transition-all">
             </div>
-            <div>
-                <label class="block text-[9px] uppercase font-bold text-blue-400 mb-1 ml-1 tracking-widest">URL Target Utama</label>
-                <input type="text" id="targetUrl" placeholder="https://target-harta-karun.com" class="w-full p-4 rounded-xl bg-black border border-zinc-800 focus:border-blue-600 outline-none transition-all text-sm">
-            </div>
-            <button id="btnDeploy" class="w-full py-4 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-black tracking-[0.2em] transition-all active:scale-95 shadow-lg shadow-blue-900/40">
-                DEPLOY ATTACK
+
+            <button id="btnExecute" class="w-full py-4 bg-zinc-900 hover:bg-blue-900/20 border border-zinc-800 hover:border-blue-500 text-blue-500 rounded font-black tracking-[0.4em] transition-all active:scale-95">
+                EXECUTE_HUNT
             </button>
         </div>
-        <div id="status" class="mt-6 text-center text-[10px] text-zinc-600 uppercase tracking-widest animate-pulse">Menunggu Instruksi...</div>
+
+        <div id="status" class="mt-8 text-[10px] font-mono text-zinc-700 uppercase leading-loose">
+            [SYS] Waiting for signal...<br>
+            [LOG] PoweredBy Kall & XyTeam
+        </div>
     </div>
 
     <script type="module">
@@ -35,24 +46,26 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
-        document.getElementById('btnDeploy').addEventListener('click', async () => {
-            const path = document.getElementById('filePath').value;
+        document.getElementById('btnExecute').addEventListener('click', async () => {
             const url = document.getElementById('targetUrl').value;
-            const statusNode = document.getElementById('status');
+            const status = document.getElementById('status');
 
-            if(!path || !url) return alert("Data belum lengkap, Yang Mulia!");
+            if(!url) return alert("URL REQUIRED, YANG MULIA!");
 
-            statusNode.innerText = "Transmitting Command...";
+            // Otorun naming: ambil domain dari URL
+            const domain = new URL(url).hostname.replace(/\./g, '_');
+            
+            status.innerHTML += `<br><span class="text-blue-500">[INF] INITIATING BREACH: ${domain}</span>`;
+            
             try {
                 await set(ref(db, 'scraper/request'), {
-                    path: path,
+                    path: `auto/${domain}`,
                     target: url,
                     timestamp: Date.now()
                 });
-                statusNode.innerText = "TARGET LOCKED. AUTO-RUNNING ON CLOUD.";
-                statusNode.classList.replace("text-zinc-600", "text-blue-400");
+                status.innerHTML += `<br><span class="text-green-500">[OK] SIGNAL SENT TO CLOUD PC</span>`;
             } catch (e) {
-                statusNode.innerText = "FAILED: " + e.message;
+                status.innerHTML += `<br><span class="text-red-500">[ERR] TRANSMISSION FAILED</span>`;
             }
         });
     </script>
