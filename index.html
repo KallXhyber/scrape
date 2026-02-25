@@ -2,39 +2,33 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>XY-DARK OS</title>
+    <title>XY-COMMAND CENTER</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { background-color: #000; font-family: 'Courier New', Courier, monospace; }
-        .os-border { border: 1px solid #1a1a1a; box-shadow: 0 0 20px rgba(59, 130, 246, 0.1); }
-        .glass { background: rgba(10, 10, 10, 0.8); backdrop-filter: blur(10px); }
+        body { background-color: #080808; color: #3b82f6; font-family: 'Consolas', monospace; }
+        .terminal-box { border: 1px solid #1e1e1e; background: rgba(13, 13, 13, 0.9); }
+        .neon-text { text-shadow: 0 0 10px rgba(59, 130, 246, 0.5); }
     </style>
 </head>
-<body class="text-zinc-400 flex items-center justify-center min-h-screen p-6">
-    <div class="glass os-border p-8 rounded-lg w-full max-w-lg relative overflow-hidden">
-        <div class="flex items-center gap-2 mb-8 border-b border-zinc-800 pb-4">
-            <div class="w-3 h-3 rounded-full bg-red-500/50"></div>
-            <div class="w-3 h-3 rounded-full bg-yellow-500/50"></div>
-            <div class="w-3 h-3 rounded-full bg-green-500/50"></div>
-            <span class="ml-4 text-[10px] uppercase tracking-[0.3em] text-blue-500 font-bold">XY-SYSTEMS :: CORE_EXTRACTOR</span>
+<body class="flex items-center justify-center min-h-screen p-4">
+    <div class="terminal-box p-8 rounded-2xl w-full max-w-lg shadow-2xl">
+        <div class="flex justify-between mb-6 border-b border-zinc-800 pb-2">
+            <span class="neon-text text-xs tracking-widest font-bold">XY-OS v3.0 :: ROOT_ACCESS</span>
+            <span class="text-zinc-600 text-xs">STATUS: ONLINE</span>
         </div>
 
-        <div class="space-y-6">
-            <div>
-                <label class="block text-[10px] uppercase mb-2 text-zinc-600 tracking-widest">Target Breach URL</label>
-                <input type="text" id="targetUrl" placeholder="https://..." 
-                    class="w-full p-4 rounded bg-black border border-zinc-800 focus:border-blue-600 text-blue-400 outline-none transition-all">
-            </div>
-
-            <button id="btnExecute" class="w-full py-4 bg-zinc-900 hover:bg-blue-900/20 border border-zinc-800 hover:border-blue-500 text-blue-500 rounded font-black tracking-[0.4em] transition-all active:scale-95">
-                EXECUTE_HUNT
+        <div class="space-y-4">
+            <input type="text" id="target" placeholder="TARGET URL (https://...)" 
+                class="w-full bg-black border border-zinc-800 p-4 rounded-lg focus:border-blue-500 outline-none text-blue-400 text-sm">
+            
+            <button onclick="deploy()" class="w-full bg-blue-600 hover:bg-blue-500 text-black font-black py-4 rounded-lg transition-all active:scale-95 tracking-[0.5em]">
+                DEPLOY_HUNT
             </button>
         </div>
 
-        <div id="status" class="mt-8 text-[10px] font-mono text-zinc-700 uppercase leading-loose">
-            [SYS] Waiting for signal...<br>
-            [LOG] PoweredBy Kall & XyTeam
+        <div id="logs" class="mt-8 text-[10px] text-zinc-500 h-24 overflow-y-auto">
+            > System ready...<br>
+            > Waiting for command...
         </div>
     </div>
 
@@ -46,28 +40,21 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
-        document.getElementById('btnExecute').addEventListener('click', async () => {
-            const url = document.getElementById('targetUrl').value;
-            const status = document.getElementById('status');
-
-            if(!url) return alert("URL REQUIRED, YANG MULIA!");
-
-            // Otorun naming: ambil domain dari URL
+        window.deploy = async () => {
+            const url = document.getElementById('target').value;
+            if(!url) return;
+            
+            const logBox = document.getElementById('logs');
             const domain = new URL(url).hostname.replace(/\./g, '_');
-            
-            status.innerHTML += `<br><span class="text-blue-500">[INF] INITIATING BREACH: ${domain}</span>`;
-            
-            try {
-                await set(ref(db, 'scraper/request'), {
-                    path: `auto/${domain}`,
-                    target: url,
-                    timestamp: Date.now()
-                });
-                status.innerHTML += `<br><span class="text-green-500">[OK] SIGNAL SENT TO CLOUD PC</span>`;
-            } catch (e) {
-                status.innerHTML += `<br><span class="text-red-500">[ERR] TRANSMISSION FAILED</span>`;
-            }
-        });
+
+            logBox.innerHTML += `<br>> TARGET LOCKED: ${domain}`;
+            await set(ref(db, 'scraper/request'), {
+                target: url,
+                path: `auto/${domain}`,
+                timestamp: Date.now()
+            });
+            logBox.innerHTML += `<br>> SIGNAL SENT. CHECK GITHUB ACTIONS.`;
+        }
     </script>
 </body>
 </html>
