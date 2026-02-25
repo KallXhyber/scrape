@@ -2,8 +2,8 @@ name: XY Trojan Node Scraper
 
 on:
   repository_dispatch:
-    types: [trigger_scrape] # Hanya jalan kalau dipanggil dari Web
-  workflow_dispatch: # Masih bisa di-run manual dari tombol GitHub
+    types: [trigger_scrape]
+  workflow_dispatch:
 
 jobs:
   scrape:
@@ -15,10 +15,11 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm' # Mengaktifkan Cache biar npm install kilat
+          # Hapus baris cache: 'npm' sementara agar tidak error lock file
           
       - name: Install Dependencies
-        run: npm ci --prefer-offline # Mode ngebut, ambil dari cache kalau ada
+        # Pakai npm install biasa dulu
+        run: npm install
         
       - name: Run Scraper
         run: node scraper.js
@@ -29,6 +30,6 @@ jobs:
         run: |
           git config --global user.name "Trojan-Bot"
           git config --global user.email "haekalsaputra01h@gmail.com"
-          git add hasil/
+          git add .
           git commit -m "Auto Harvest [$(date)]" || echo "No changes"
           git push
