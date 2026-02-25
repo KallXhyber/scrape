@@ -6,22 +6,33 @@ const path = require('path');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const GITHUB_TOKEN = process.env.XY_GIST_TOKEN;
 const FIREBASE_URL = "https://kall-e4441-default-rtdb.asia-southeast1.firebasedatabase.app/scraper/request.json";
 
-// Middleware agar file di folder hasil bisa diakses publik
-app.use('/harta-karun', express.static(path.join(__dirname, 'hasil')));
+async function uploadToGist(domain, data) {
+    if (!GITHUB_TOKEN) return console.log(" [!] GIST_TOKEN_MISSING");
+    console.log(" [>] SYNCING TO GITHUB GIST...");
+    try {
+        const response = await axios.post('https://api.github.com/gists', {
+            description: `XY-Harvest: ${domain}`,
+            public: true,
+            files: { [`${domain}.js`]: { content: `export const XY_DATA = ${JSON.stringify(data, null, 4)};` } }
+        }, { headers: { 'Authorization': `token ${GITHUB_TOKEN}` } });
+        console.log(` [OK] GIST_CREATED: ${response.data.html_url}`);
+    } catch (err) {
+        console.log(` [ERR] GIST_FAILED: ${err.message}`);
+    }
+}
 
-// Fungsi Utama: Scraper
 async function runScraper() {
-    console.log(" [SYS] INITIATING DEEP SCAN...");
+    console.log(" [SYS] XY-OS BREACHING INITIATED...");
     try {
         const { data } = await axios.get(FIREBASE_URL);
         if (!data || !data.target) return;
 
         const target = data.target;
         const domain = new URL(target).hostname.replace(/\./g, '_');
-        const savePath = path.join(__dirname, 'hasil', 'auto', `${domain}.js`);
-
+        
         const browser = await puppeteer.launch({
             headless: "new",
             args: ['--no-sandbox', '--disable-setuid-sandbox']
@@ -43,26 +54,20 @@ async function runScraper() {
             data: treasures
         };
 
+        // 1. Simpan Lokal
+        const savePath = path.join(__dirname, 'hasil', 'auto', `${domain}.js`);
         fs.mkdirSync(path.dirname(savePath), { recursive: true });
         fs.writeFileSync(savePath, `export const XY_DATA = ${JSON.stringify(report, null, 4)};`);
 
-        console.log(` [OK] BREACH SUCCESS: ${domain}.js`);
+        // 2. Sync ke Gist
+        await uploadToGist(domain, report);
+
         await browser.close();
+        process.exit(0); // Selesai
     } catch (err) {
         console.log(` [ERR] ${err.message}`);
+        process.exit(1);
     }
 }
 
-// Route untuk cek status server
-app.get('/', (req, res) => {
-    res.send({ status: "XY-SYSTEMS ACTIVE", message: "Use /harta-karun to see results" });
-});
-
-app.listen(PORT, () => {
-    console.log(` [SYS] OS SERVER RUNNING ON PORT ${PORT}`);
-    // Jalankan scraper otomatis setiap 1 jam jika di server, 
-    // atau biarkan GitHub Actions yang pemicunya.
-});
-
-// Jalankan sekali saat start
-runScraper();
+app.listen(PORT, () => runScraper());
